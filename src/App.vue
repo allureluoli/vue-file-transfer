@@ -10,7 +10,7 @@
 <script>
 import FileUpload from './components/FileUpload.vue'
 import FileList from './components/FileList.vue'
-
+let pw = prompt('输入密码进行验证')
 export default {
   name: 'App',
   components: {
@@ -20,8 +20,8 @@ export default {
   data() {
     return {
       files: [],
-      password: 'password',
-      apiBaseUrl: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000' // 添加后端地址
+      password: pw,
+      apiBaseUrl: process.env.VUE_APP_API_BASE_URL || 'http://ddns.curesky.site:7878' // 添加后端地址
     }
   },
   methods: {
