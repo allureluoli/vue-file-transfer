@@ -1,12 +1,13 @@
 <template>
   <div id="app">
-    <h1>文件传输工具</h1>
+    <h1>文件传输工具链</h1>
     <div class="container">
       <FileUpload @file-uploaded="handleFileUpload" />
-      <FileList :files="files" @refresh="fetchFiles" />
+      <FileList :files="files" :password="password" @refresh="fetchFiles" />
     </div>
   </div>
 </template>
+
 <script>
 import FileUpload from './components/FileUpload.vue'
 import FileList from './components/FileList.vue'
@@ -21,7 +22,7 @@ export default {
     return {
       files: [],
       password: pw,
-      apiBaseUrl: process.env.VUE_APP_API_BASE_URL || 'http://ddns.curesky.site:7878' // 添加后端地址
+      apiBaseUrl: process.env.VUE_APP_API_BASE_URL || 'http://ddns.curesky.site:7878'
     }
   },
   methods: {
@@ -30,16 +31,17 @@ export default {
         const formData = new FormData()
         formData.append('paste', file)
         
-        const response = await fetch(`${this.apiBaseUrl}/save?password=${this.password}`, {
+        const response = await fetch(`${this.apiBaseUrl}/save?password=${this.password}&filename=${encodeURIComponent(file.name)}`, {
           method: 'POST',
           body: formData
         })
         
         if (response.ok) {
-          const fileUrl = await response.text()
+          const fileId = await response.text()
           this.files.push({
+            id: fileId,
             name: file.name,
-            url: `${this.apiBaseUrl}/${fileUrl}`, // 确保URL完整
+            url: `${this.apiBaseUrl}/${fileId}?password=${this.password}`,
             size: file.size,
             uploadTime: new Date().toLocaleString()
           })
@@ -63,13 +65,13 @@ export default {
           throw new Error('获取文件列表失败');
         }
         
-        const fileNames = await response.json();
-        // 将文件名数组转换为包含完整URL的文件对象数组
-        this.files = fileNames.map(name => ({
-          name,
-          url: `${this.apiBaseUrl}/download/${name}`, // 根据你的后端路由调整
-          size: 0, // 需要后端提供文件大小信息
-          uploadTime: '' // 需要后端提供上传时间
+        const fileData = await response.json();
+        this.files = fileData.map(file => ({
+          id: file[0],
+          name: file[2],
+          url: `${this.apiBaseUrl}/${file[0]}?password=${this.password}`,
+          size: file[1],
+          uploadTime: new Date().toLocaleString()
         }));
         
         this.$message.success('文件列表获取成功');
@@ -80,10 +82,9 @@ export default {
     }
   },
   mounted() {
-    this.fetchFiles(); // 组件挂载时获取文件列表
+    this.fetchFiles();
   }
 }
-
 </script>
 
 
